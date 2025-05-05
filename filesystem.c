@@ -2,83 +2,88 @@
 #include <stdlib.h>
 #include <string.h>
 
-FILE* open_or_create_file(const char* filename) {
-    FILE* file = fopen(filename, "a+");
-    if (!file) {
-        perror("Ошибка открытия или создания файла");
+FILE* open_or_create_fs(const char* filename) {
+    FILE* file = fopen(filename, "a+"); 
+    if (file == NULL) {
+        perror("Ошибка при открытии файла");
         exit(EXIT_FAILURE);
     }
     return file;
 }
 
-char* view_file(const char* filename, const char* target_file) {
-    FILE* file = fopen(filename, "r");
-    if (!file) {
-        perror("Ошибка открытия файла для чтения");
-        return NULL;
-    }
 
-    char* buffer = NULL;
-    size_t size = 0;
-    size_t found = 0;
-    ssize_t read;
+char* read_file_in_fs(const char* fs_content, const char* target_file) {
+    char* content = strdup(fs_content);
+    char* line = strtok(content, "\n");
+    int found = 0;
+    char* result = NULL;
 
-    while ((read = getline(&buffer, &size, file)) != -1) {
-        if (strstr(buffer, target_file) != NULL) {
+    while (line != NULL) {
+        if (strcmp(line, target_file) == 0) {
             found = 1;
+            line = strtok(NULL, "\n");
+            result = malloc(strlen(line) + 1);
+            strcpy(result, line);
             break;
         }
+        line = strtok(NULL, "\n");
     }
 
-    if (found) {
-        char* content = malloc(1024);
-        size_t index = 0;
-        while ((read = getline(&buffer, &size, file)) != -1 && buffer[0] != '/') {
-            strcat(content + index, buffer);
-            index += read;
-        }
-        free(buffer);
-        fclose(file);
-        return content;
-    }
-
-    free(buffer);
-    fclose(file);
-    return NULL;
+    free(content);
+    return found ? result : NULL;
 }
 
-void delete_file(const char* filename, const char* target_file) {
-    FILE* file = fopen(filename, "r");
-    if (!file) {
-        perror("Ошибка открытия файла для чтения");
-        return;
-    }
 
-    FILE* temp_file = fopen("temp.txt", "w");
-    char* buffer = NULL;
-    size_t size = 0;
-    ssize_t read;
-
+void delete_file_in_fs(const char* filename, const char* fs_content, const char* output_filename) {
+    FILE* output = fopen(output_filename, "w");
+    char* content = strdup(fs_content);
+    char* line = strtok(content, "\n");
     int skip = 0;
-    while ((read = getline(&buffer, &size, file)) != -1) {
-        if (strstr(buffer, target_file) != NULL) {
+
+    while (line != NULL) {
+        if (strcmp(line, filename) == 0) {
             skip = 1;
+        } else if (line[0] == '/') {
+            skip = 0;
         }
 
-        if (skip) {
-            if (buffer[0] == '/') {
-                skip = 0;
-            }
-            continue;
+        if (!skip) {
+            fprintf(output, "%s\n", line);
         }
-
-        fputs(buffer, temp_file);
+        line = strtok(NULL, "\n");
     }
 
-    fclose(file);
-    fclose(temp_file);
-    free(buffer);
+    free(content);
+    fclose(output);
+}
 
-    remove(filename);
-    rename("temp.txt", filename);
+ 
+void create_new_file(const char* filename, const char* content, const char* fs_filename) {
+    FILE* fs_file = fopen(fs_filename, "a");
+    fprintf(fs_file, "%s\n%s\n/\n", filename, content);
+    fclose(fs_file);
+}
+
+
+void modify_file_in_fs(const char* filename, const char* new_content, const char* fs_content, const char* output_filename) {
+    FILE* output = fopen(output_filename, "w");
+    char* content = strdup(fs_content);
+    char* line = strtok(content, "\n");
+    int inside_target = 0;
+
+    while (line != NULL) {
+        if (strcmp(line, filename) == 0) {
+            inside_target = 1;
+            fprintf(output, "%s\n%s\n", line, new_content);
+            while (line != NULL && line[0] != '/') {
+                line = strtok(NULL, "\n");
+            }
+        } else {
+            fprintf(output, "%s\n", line);
+            line = strtok(NULL, "\n");
+        }
+    }
+
+    free(content);
+    fclose(output);
 }
