@@ -53,3 +53,13 @@
 2. Добавьте в ваш проект:
    ```c
    #include "filesystem.h"
+
+3. Функции:
+
+        create_file() — создание файла.
+
+        delete_file() — удаление файла.
+
+        read_file() / write_file() — чтение/запись.
+
+        list_files() — вывод списка файлов.
