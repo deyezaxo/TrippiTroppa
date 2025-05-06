@@ -3,7 +3,7 @@
 #include <string.h>
 #include "filesystem.h"
 
-FILE* open_or_create_fs(const char* filename) {
+FILE* fs_open_or_create(const char* filename) {
     FILE* file = fopen(filename, "a+"); 
     if (file == NULL) {
         perror("Ошибка при открытии файла");
@@ -12,8 +12,7 @@ FILE* open_or_create_fs(const char* filename) {
     return file;
 }
 
-
-char* read_file_in_fs(const char* fs_content, const char* target_file) {
+char* fs_read_file(const char* fs_content, const char* target_file) {
     char* content = strdup(fs_content);
     char* line = strtok(content, "\n");
     int found = 0;
@@ -34,8 +33,7 @@ char* read_file_in_fs(const char* fs_content, const char* target_file) {
     return found ? result : NULL;
 }
 
-
-void delete_file_in_fs(const char* filename, const char* fs_content, const char* output_filename) {
+void fs_delete_file(const char* filename, const char* fs_content, const char* output_filename) {
     FILE* output = fopen(output_filename, "w");
     char* content = strdup(fs_content);
     char* line = strtok(content, "\n");
@@ -58,15 +56,13 @@ void delete_file_in_fs(const char* filename, const char* fs_content, const char*
     fclose(output);
 }
 
- 
-void create_new_file(const char* filename, const char* content, const char* fs_filename) {
+void fs_create_file(const char* filename, const char* content, const char* fs_filename) {
     FILE* fs_file = fopen(fs_filename, "a");
     fprintf(fs_file, "%s\n%s\n/\n", filename, content);
     fclose(fs_file);
 }
 
-
-void modify_file_in_fs(const char* filename, const char* new_content, const char* fs_content, const char* output_filename) {
+void fs_modify_file(const char* filename, const char* new_content, const char* fs_content, const char* output_filename) {
     FILE* output = fopen(output_filename, "w");
     char* content = strdup(fs_content);
     char* line = strtok(content, "\n");
@@ -84,7 +80,5 @@ void modify_file_in_fs(const char* filename, const char* new_content, const char
             line = strtok(NULL, "\n");
         }
     }
-
-    free(content);
     fclose(output);
 }
