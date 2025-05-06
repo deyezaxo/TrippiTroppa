@@ -40,3 +40,16 @@
   - `new_content` (`const char*`) – Новый текст.  
   - `fs_content` (`const char*`) – Вся файловая система.  
   - `output_filename` (`const char*`) – Файл для сохранения.  
+
+# Filesystem Library
+
+Библиотека для работы с файловой системой.  
+Подключите к своему проекту на C:
+
+1. Скопируйте файлы:
+   - `filesystem.h` — заголовочный файл.
+   - `filesystem.c` — исходный код.
+
+2. Добавьте в ваш проект:
+   ```c
+   #include "filesystem.h"
