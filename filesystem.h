@@ -1,14 +1,10 @@
 #ifndef FILESYSTEM_H
 #define FILESYSTEM_H
 
-int create_file(const char* filename);
+#include <stdio.h>
 
-int delete_file(const char* filename);
-
-int write_file(const char* filename, const char* data);
-
-char* read_file(const char* filename);
-
-void list_files();
+FILE* fs_open_or_create(const char* filename);
+char* fs_view_file(const char* filename, const char* target_file);
+void fs_delete_file(const char* filename, const char* target_file);
 
 #endif
