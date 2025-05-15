@@ -3,93 +3,69 @@
 #include <string.h>
 #include "filesystem.h"
 
-FILE* open_or_create_file(const char* filename) {
-    FILE* file = fopen(filename, "a+");
-    if (!file) {
-        perror("Ошибка открытия или создания файла");
-        exit(EXIT_FAILURE);
-    }
-    return file;
-}
+#define MAX_INPUT 256
+#define MAX_ARGS 5
 
-char* view_file(const char* filename, const char* target_file) {
-    FILE* file = fopen(filename, "r");
-    if (!file) {
-        perror("Ошибка открытия файла для чтения");
-        return NULL;
-    }
-
-    char* buffer = NULL;
-    size_t size = 0;
-    size_t found = 0;
-    ssize_t read;
-
-    while ((read = getline(&buffer, &size, file)) != -1) {
-        if (strstr(buffer, target_file) != NULL) {
-            found = 1;
-            break;
-        }
-    }
-
-    if (found) {
-        char* content = malloc(1024);
-        size_t index = 0;
-        while ((read = getline(&buffer, &size, file)) != -1 && buffer[0] != '/') {
-            strcat(content + index, buffer);
-            index += read;
-        }
-        free(buffer);
-        fclose(file);
-        return content;
-    }
-
-    free(buffer);
-    fclose(file);
-    return NULL;
-}
-
-void delete_file(const char* filename, const char* target_file) {
-    FILE* file = fopen(filename, "r");
-    if (!file) {
-        perror("Ошибка открытия файла для чтения");
-        return;
-    }
-
-    FILE* temp_file = fopen("temp.txt", "w");
-    char* buffer = NULL;
-    size_t size = 0;
-    ssize_t read;
-
-    int skip = 0;
-    while ((read = getline(&buffer, &size, file)) != -1) {
-        if (strstr(buffer, target_file) != NULL) {
-            skip = 1;
-        }
-
-        if (skip) {
-            if (buffer[0] == '/') {
-                skip = 0;
-            }
-            continue;
-        }
-
-        fputs(buffer, temp_file);
-    }
-
-    fclose(file);
-    fclose(temp_file);
-    free(buffer);
-
-    remove(filename);
-    rename("temp.txt", filename);
+void print_help() {
+    printf("Доступные команды:\n");
+    printf("  создать <имя_файла> <содержимое>\n");
+    printf("  удалить <имя_файла>\n");
+    printf("  изменить <имя_файла> <новое_содержимое>\n");
+    printf("  посмотреть <имя_файла>\n");
+    printf("  выход\n");
 }
 
 int main() {
-    create_file("test.txt");
-    write_file("test.txt", "Hello, File System!");
-    char* content = read_file("test.txt");
-    printf("File content: %s\n", content);
-    list_files();
-    
+    char input[MAX_INPUT];
+    char* args[MAX_ARGS];
+    char* token;
+    int i;
+
+    printf("Файловая система v1.0\n");
+    print_help();
+
+    while (1) {
+        printf("> ");
+        fgets(input, MAX_INPUT, stdin);
+        input[strcspn(input, "\n")] = '\0';
+
+        i = 0;
+        token = strtok(input, " ");
+        while (token != NULL && i < MAX_ARGS) {
+            args[i++] = token;
+            token = strtok(NULL, " ");
+        }
+
+        if (i == 0) continue;
+
+        if (strcmp(args[0], "создать") == 0 && i >= 3) {
+            fs_create_new_file(args[1], args[2], "data.fs");
+            printf("Файл '%s' создан.\n", args[1]);
+        }
+        else if (strcmp(args[0], "удалить") == 0 && i >= 2) {
+            fs_delete_file("data.fs", args[1]);
+            printf("Файл '%s' удален.\n", args[1]);
+        }
+        else if (strcmp(args[0], "изменить") == 0 && i >= 3) {
+            fs_modify_file(args[1], args[2], "data.fs", "data.fs");
+            printf("Файл '%s' изменен.\n", args[1]);
+        }
+        else if (strcmp(args[0], "посмотреть") == 0 && i >= 2) {
+            char* content = fs_view_file("data.fs", args[1]);
+            if (content) {
+                printf("< %s\n", content);
+                free(content);
+            } else {
+                printf("Файл не найден.\n");
+            }
+        }
+        else if (strcmp(args[0], "выход") == 0) {
+            break;
+        }
+        else {
+            printf("Неверная команда. Введите 'помощь' для списка команд.\n");
+        }
+    }
+
     return 0;
 }
